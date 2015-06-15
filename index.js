@@ -157,6 +157,7 @@ GulpSSH.prototype.stream = function (command, options) {
     var chunks = [];
     var outStream = through.obj();
   
+    options = options || {};
     options.autoClose = true;
 
     gutil.log(packageName + ' :: Running :: ' + command);
