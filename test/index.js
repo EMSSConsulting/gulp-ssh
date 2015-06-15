@@ -38,7 +38,13 @@ module.exports = function() {
       .shell(['cd /home/thunks', 'git pull', 'npm install', 'npm update', 'npm test'], {filePath: 'shell.log'})
       .pipe(gulp.dest('logs'));
   });
+  
+  gulp.task('stream', function () {
+    return gulp.src('readme.md')
+      .pipe(gulpSSH.stream('cd /home/thunks; cat > readme.md', { filePath: 'stream.log' }))
+      .pipe(gulp.dest('logs'));
+  });
 
-  gulp.task('test', gulpSequence('exec', 'sftp-read', 'sftp-write', 'shell'));
+  gulp.task('test', gulpSequence('exec', 'sftp-read', 'sftp-write', 'shell', 'stream'));
 
 };
