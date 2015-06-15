@@ -151,6 +151,7 @@ GulpSSH.prototype.exec = function(commands, options) {
 GulpSSH.prototype.stream = function (command, options) {
   var ctx = this;
   var ssh = this.ssh2;
+  options = options || {};
   
   this.connect();
   
@@ -162,7 +163,7 @@ GulpSSH.prototype.stream = function (command, options) {
     ctx.ready(function () {
       gutil.log(packageName + ' :: Running :: ' + command);
       ssh.exec(command, options, function (err, stream) {
-        if (err) return outStream.emit('error', new gutil.PluginError(packageName, err));
+        if (err) rcallback(new gutil.PluginError(packageName, err));
 
         stream.on('data', function (chunk) {
           chunkSize += chunk.length;
@@ -171,21 +172,19 @@ GulpSSH.prototype.stream = function (command, options) {
           .on('exit', function (code, signalName, didCoreDump, description) {
           if (ctx.ignoreErrors === false && code == null) {
             var message = signalName + ', ' + didCoreDump + ', ' + description;
-            outStream.emit('error', new gutil.PluginError(packageName, message));
+            callback(new gutil.PluginError(packageName, message));
           }
         })
-          .on('close', function () {
-          outStream.push(new gutil.File({
+        .on('close', function () {
+          callback(null, new gutil.File({
             cwd: __dirname,
             base: __dirname,
             path: path.join(__dirname, options.filePath || 'gulp-ssh.exec.log'),
             contents: Buffer.concat(chunks, chunkSize)
           }));
-          outStream.end();
-          callback(null, outStream);
         })
-          .stderr.on('data', function (data) {
-          outStream.emit('error', new gutil.PluginError(packageName, data + ''));
+        .stderr.on('data', function (data) {
+          callback(new gutil.PluginError(packageName, data + ''));
         });
 
         if (file.isStream())
